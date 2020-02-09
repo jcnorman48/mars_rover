@@ -8,10 +8,10 @@ This is a (close) functional programming implementation in java
 ## Running
 Run the main class com.james.marsrover.Run or the corresponding unit test
 
-Alternatively, download the [jar](mars_rover-1.0.jar)  
+Alternatively, download the [jar](raw/master/mars_rover-1.0.jar)  
 and execute: `java -cp mars_rover-1.0.jar com.james.marsrover.Run`
 
 ## Starting webserver
-The webserver can be started by downloading the [jar](mars_rover-1.0.jar)  
+The webserver can be started by downloading the [jar](raw/master/mars_rover-1.0.jar)  
 execute: `java -jar mars_rover-1.0.jar`  
 Open http://127.0.0.1:8085/ in a browser to view results
