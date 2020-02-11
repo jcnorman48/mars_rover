@@ -3,16 +3,42 @@ package com.james.marsrover;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Run {
 
-    public static void main(String[] args){
+    static final class ParserException extends IllegalArgumentException {
+        final String input;
+        public ParserException(String input) {
+            super("Error parsing: " + input);
+            this.input = input;
+        }
+    }
 
-        //initial input
-        String input = "5 5 1 2 N LMLMLMLMM 3 3 E MMRMMRMRRM";
-        System.out.println(run(input));
+    public static void main(String[] args){
+        if(args.length != 1){
+            printUsage(Optional.empty());
+        }
+
+        try{
+            System.out.println(run(args[0]));
+        }catch( ParserException pe){
+            printUsage(Optional.of(pe.input));
+        }
+    }
+
+    private static void printUsage(Optional<String> currentParams){
+        String inputError = currentParams
+                .map(i-> "Invalid Input parameter: " + i + "\n")
+                .orElse("usage: java -cp mars_rover-1.0.jar com.james.marsrover.Run PARAMS\n" +
+                        "PARAMS format: gridWidth gridHeight r1StartX r1StartY r1Orientation r1Instructions " +
+                        "r2StartX r2StartY r2Orientation r2Instructions\n");
+
+        System.out.println( inputError +
+                "example: java -cp mars_rover-1.0.jar com.james.marsrover.Run \"5 5 1 2 N LMLMLMLMM 3 3 E MMRMMRMRRM\"");
+        System.exit(1);
     }
 
     static String run(String input){
@@ -63,19 +89,37 @@ public class Run {
 
         static Parser parse(String arg){
 
-            List<String> parts = Arrays.asList(arg.split(" "));
-            int gridX = Integer.parseInt(parts.get(0));
-            int gridY = Integer.parseInt(parts.get(0));
+            try{
+                List<String> parts = Arrays.asList(arg.split(" "));
+                int gridX = Integer.parseInt(parts.get(0));
+                int gridY = Integer.parseInt(parts.get(0));
 
-            List<String> rawRoverArgs = parts.subList(2, parts.size());
-            List<RoverArgs> roverArgs = new ArrayList<>();
-            //Went with a sublist list partition to parse all the rover args, this would be much cleaner
-            //with a guava PartitionedList....
-            for(int i=0; i<rawRoverArgs.size(); i+=4){
-                roverArgs.add(Stream.of(rawRoverArgs.subList(i, i+4)).map(Parser::parseRoverArgs).findFirst().get());
+                List<String> rawRoverArgs = parts.subList(2, parts.size());
+                List<RoverArgs> roverArgs = new ArrayList<>();
+                //Went with a sublist list partition to parse all the rover args, this would be much cleaner
+                //with a guava PartitionedList....
+                for(int i=0; i<rawRoverArgs.size(); i+=4){
+
+                    roverArgs.add(Stream.of(rawRoverArgs.subList(i, i+4)).map(Parser::parseRoverArgs)
+                            .peek(r->{
+                                //ensure valid starting position
+                                if( r.startPosition.getX() < 0 || r.startPosition.getY() < 0 ||
+                                    r.startPosition.getX() > gridX || r.startPosition.getY() > gridY
+                                ){
+                                    throw new IllegalArgumentException("Invalid start position");
+                                }
+                            })
+                            .findFirst().get());
+                }
+
+                return new Parser(gridX, gridY, roverArgs);
             }
-
-            return new Parser(gridX, gridY, roverArgs);
+            //many unchecked exceptions can be thrown, just catch em all
+            //for a proper program all input fields would be validated at a granular level
+            //in addition to validating things like positive values etc
+            catch(Exception e ){
+                throw new ParserException(arg);
+            }
         }
 
         static RoverArgs parseRoverArgs(List<String> roverArgs){
