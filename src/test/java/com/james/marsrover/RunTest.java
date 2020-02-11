@@ -13,7 +13,15 @@ public class RunTest {
         assertEquals(results, "1 3 N 5 1 E");
     }
 
-    //this test would test the parser as well, no validation check on it though
-    //as there's no external input
+    @Test
+    public void testValidParser(){
+        String input = "5 5 1 2 N LMLMLMLMM 3 3 E MMRMMRMRRM";
+        assertSame(Run.Parser.parse(input).gridWidth, 5);
+    }
+
+    @Test(expected = Run.ParserException.class)
+    public void testInvalidParser(){
+        Run.Parser.parse("bad input");
+    }
 
 }
